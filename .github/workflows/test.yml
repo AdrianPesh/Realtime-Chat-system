@@ -12,7 +12,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: api-service
+        working-directory: api-services
 
     steps:
 
