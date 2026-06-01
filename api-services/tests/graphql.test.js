@@ -1,3 +1,7 @@
+beforeAll(()=>{
+    process.env.JWT_SECRET = "super-secret";
+});
+
 const request = require("supertest");
 
 const {createApp} = require("../app");
