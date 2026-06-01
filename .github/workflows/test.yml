@@ -1,4 +1,4 @@
-name: API TESTS
+name: API Tests
 
 on:
   push:
@@ -12,14 +12,16 @@ jobs:
 
     defaults:
       run:
-        working-directory: api-services
+        working-directory: api-service
 
-      steps:
+    steps:
 
-        - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-        - uses: actions/setup-node@v4
-          with:
-            node-version: 20
-        - run: npm install
-        - run: npm test
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - run: npm install
+
+      - run: npm test
