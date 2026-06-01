@@ -1,10 +1,5 @@
 const prisma = require("../config/prisma");
-
-  const roles = {
-        OWNER:1,
-        ADMIN:2,
-        MEMBER:3
-    }
+const { canManageRoles} = require("../helpers/roleHelper");
 
 const addMember = async(workspaceId,currentUserId,userIdToAdd,role)=>{
  
@@ -12,9 +7,7 @@ const addMember = async(workspaceId,currentUserId,userIdToAdd,role)=>{
 if(currentUserId==userIdToAdd){
   throw new Error("Target user cannot be the same as the current user");
 }
-if(!roles[role]){
-  throw new Error("Invalid role provided");
-}
+
   const existingMember = await prisma.workspaceMember.findFirst({
         where:{
             workspaceId:Number(workspaceId),
@@ -35,12 +28,13 @@ if(!roles[role]){
       throw new Error("Current user not a member of this workpsace");
     }
 
-    const currentUserRoleIndex = roles[currentUser.role];
-    const targetUserRoleIndex = roles[role];
-    
-    if(currentUserRoleIndex>=targetUserRoleIndex){
-          throw new Error("Current user doesn't have permission to add this user's role");
+   const canManageRows= canManageRoles(currentUser.role,role);
+
+    if(!canManageRows){
+      throw new Error("User doesn;t have permission for this action");
     }
+    
+    
 
 
 
@@ -80,12 +74,12 @@ const removeMember = async(workspaceId,userId,userIdToRemove)=>{
    if(!targetUser){
       throw new Error("Target user isn't part of this workspace");
    }
-   const currentuserRoleIndex = roles[CurrentUser.role];
-   const targetUserRoleIndex = roles[targetUser.role];
+   
 
-   if(currentuserRoleIndex>=targetUserRoleIndex){
-        throw new Error("Current user doesn't have permission to remove target user");
-   }
+  const canManageRoles = canManageRoles(CurrentUser.role,targetUser.role);
+  if(!canManageRoles){
+      throw new Error("User doesn't have permssion for this operation");
+  }
 
    
    const removedMember =  await prisma.workspaceMember.delete({
@@ -109,9 +103,7 @@ const changeMemberRole = async(workspaceId,CurrentUserId,userIdToChange,newRole)
           throw new Error("Cannot change your own role");
     }
 
-    if(!roles[newRole]){
-         throw new Error("Invalid role");
-    }
+
     const CurrentUser = await prisma.workspaceMember.findFirst({
         where:{
             workspaceId:Number(workspaceId),
@@ -121,9 +113,6 @@ const changeMemberRole = async(workspaceId,CurrentUserId,userIdToChange,newRole)
     if(!CurrentUser){
       throw new Error("No such member");
     }
-
-    const currentUserRoleIndex = roles[CurrentUser.role];
-    const newRoleIndex = roles[newRole];
 
     const targetMember = await prisma.workspaceMember.findFirst({
         where:{
@@ -135,15 +124,21 @@ const changeMemberRole = async(workspaceId,CurrentUserId,userIdToChange,newRole)
     if(!targetMember){
       throw new Error("User you are trying to modify doesn't exist");
     }
-    const targetRoleIndex = roles[targetMember.role];
 
-    if(currentUserRoleIndex>=targetRoleIndex){
-       throw new Error("Current user doesn't have permission for this operation");
+    const canManageRolesCurrent = canManageRoles(CurrentUser.role,targetMember.role);
+
+    if(!canManageRolesCurrent){
+      throw new Error("User cannot change target user role because target user has higher authority");
     }
 
-    if(newRoleIndex<=currentUserRoleIndex){
-       throw new Error("User has no such permission");
+    const canManageRolesTarget = canManageRoles(CurrentUser.role,newRole);
+
+    if(!canManageRolesTarget){
+        throw new Error("User cannot give higher authority than their own");
     }
+
+
+
 
     try{
 

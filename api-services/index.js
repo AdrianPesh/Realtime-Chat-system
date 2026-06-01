@@ -1,14 +1,13 @@
 const express = require("express");
 
-const context = require("./middleware/context");
+
 
 const {connectRedis} = require("./config/redis");
 
-const {subscriber} = require("./config/redis");
 
-const cors = require("cors");
 
-const {ApolloServer} = require("@apollo/server");
+
+const {createApp} = require("./app");
 
 const {Server}=require("socket.io");
 
@@ -20,11 +19,9 @@ const {messageHandler} = require("./handlers/messageHandler");
 
 const {redisSubscriber} = require("./handlers/redisHandler");
 
-const typeDefs = require("./schemas/index");
 
-const resolvers = require("./resolvers/index");
 
-const {expressMiddleware} = require("@as-integrations/express5");
+
 
 const socketAuth = require("./middleware/socketAuth");
 
@@ -60,7 +57,7 @@ const start = async()=>{
 
 
 
-    const app = express();
+    const app = await createApp();
 
     const httpServer = http.createServer(app);
 
@@ -79,14 +76,9 @@ const start = async()=>{
     
   });
 
-    const server = new ApolloServer({
-    typeDefs,
-    resolvers
-  });    
+ 
 
-  await server.start();
-
-  app.use("/graphql",cors(),express.json(),expressMiddleware(server,{context}));
+  
 
   httpServer.listen(3000,()=>{
     console.log("Server is running");
